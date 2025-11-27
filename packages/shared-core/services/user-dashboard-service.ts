@@ -94,7 +94,7 @@ export class UserDashboardService extends BaseService {
   }
 
   protected debounce(func: (...args: any[]) => void, wait: number): () => void {
-    let timeout: NodeJS.Timeout | null = null;
+    let timeout: number | null = null;
     return (...args: any[]) => {
       if (timeout) {
         clearTimeout(timeout);
