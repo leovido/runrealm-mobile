@@ -103,10 +103,13 @@ export class UserDashboardService extends BaseService {
     };
   }
 
-  protected throttle(func: (...args: any[]) => void, wait: number): () => void {
-    let timeout: NodeJS.Timeout | null = null;
+  protected throttle(
+    func: (...args: unknown[]) => void,
+    wait: number
+  ): () => void {
+    let timeout: number | null = null;
     let lastExecTime = 0;
-    return (...args: any[]) => {
+    return (...args: unknown[]) => {
       const now = Date.now();
       if (now - lastExecTime > wait) {
         func.apply(this, args);
