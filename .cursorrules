@@ -1,0 +1,128 @@
+# RunRealm AI Agent Guidelines
+
+## 🎯 Core Mission: Quality Without Regressions
+
+**CRITICAL**: This project prioritizes **maintaining quality while preventing regressions**. All changes must preserve existing functionality and pass all quality checks.
+
+## ✅ Quality Standards
+
+### 1. **Always Run Tests Before Committing**
+- Run `npm run test` to ensure all tests pass
+- If tests fail, fix them before making any other changes
+- Never disable or skip tests to make code "work"
+- Tests are minimal but growing - respect the test suite
+
+### 2. **Biome Linting & Formatting**
+- **ALWAYS** run `npm run lint` before committing code
+- Biome is configured in `biome.json` - follow its rules
+- The CI pipeline will fail if linting fails
+- Pre-commit hooks (Lefthook) auto-format staged files, but verify manually
+
+### 3. **Type Safety**
+- TypeScript errors must be resolved before committing
+- Run `npm run build:shared` to check for type errors
+- Never use `any` unless absolutely necessary (Biome warns on this)
+
+## 🚫 What NOT to Do
+
+### **NEVER Remove Features**
+- Do not remove or delete existing features without explicit user request
+- Do not "refactor" by removing code that appears unused - it may be used elsewhere
+- Do not simplify code by removing functionality
+- If you see a feature, assume it's essential
+
+### **NEVER Make Unnecessary Changes**
+- Do not refactor code "just because" - only refactor when:
+  - The user explicitly requests it
+  - It's necessary to fix a bug
+  - It's required to add a new feature
+- Do not change formatting beyond what Biome requires
+- Do not rename variables/functions unless explicitly asked
+- Do not reorganize imports beyond Biome's auto-organization
+
+### **NEVER Break Existing Functionality**
+- If a change might affect existing features, test them first
+- When modifying shared code, check all packages that use it
+- Preserve API contracts - don't change function signatures unnecessarily
+- Maintain backward compatibility when possible
+
+## ✅ What TO Do
+
+### **Before Making Changes**
+1. **Run the test suite**: `npm run test`
+2. **Check linting**: `npm run lint:check`
+3. **Verify types**: `npm run build:shared`
+4. **Understand the codebase**: Read related files and documentation
+
+### **When Making Changes**
+1. **Make minimal changes**: Only change what's necessary
+2. **Preserve existing patterns**: Follow existing code style and architecture
+3. **Add tests for new features**: If adding functionality, add tests
+4. **Update tests when fixing bugs**: If fixing a bug, add a test to prevent regression
+
+### **After Making Changes**
+1. **Run tests again**: `npm run test`
+2. **Run linting**: `npm run lint` (auto-fixes issues)
+3. **Verify build**: `npm run build:shared`
+4. **Check CI will pass**: Ensure all CI checks will succeed
+
+## 📋 Project Structure
+
+### Monorepo Packages
+- `packages/shared-core/` - Domain logic and business rules
+- `packages/shared-types/` - TypeScript interfaces
+- `packages/shared-utils/` - Common utilities
+- `packages/shared-blockchain/` - Web3 and contract services
+- `packages/web-app/` - Web platform
+- `packages/mobile-app/` - Mobile platform
+
+### Testing
+- Tests use Jasmine (configured in `jasmine.json`)
+- Test files: `**/*.spec.ts` in `src/` directory
+- Test structure: `packages/shared-core/services/__tests__/`
+- Run tests: `npm run test`
+
+### Code Quality Tools
+- **Biome**: Linting and formatting (`biome.json`)
+- **Lefthook**: Git hooks for pre-commit/pre-push checks (`lefthook.yml`)
+- **CI/CD**: GitHub Actions (`.github/workflows/ci.yml`)
+
+## 🔍 Architecture Principles
+
+From `docs/ARCHITECTURE.md`:
+- **ENHANCEMENT FIRST**: Enhance existing components over creating new ones
+- **AGGRESSIVE CONSOLIDATION**: Delete unnecessary code (but verify it's truly unnecessary!)
+- **PREVENT BLOAT**: Audit before adding
+- **DRY**: Single source of truth
+- **CLEAN**: Clear separation of concerns
+- **MODULAR**: Composable, testable modules
+
+## ⚠️ Red Flags - Stop and Ask
+
+If you encounter any of these, **STOP** and clarify with the user:
+- Code that appears unused but might be used elsewhere
+- Features that seem incomplete but might be work-in-progress
+- Tests that are failing but seem unrelated to your changes
+- Architecture decisions that seem inconsistent
+
+## 📝 Commit Guidelines
+
+- Write clear, descriptive commit messages
+- Make atomic commits (one logical change per commit)
+- Ensure all quality checks pass before committing
+- Pre-push hooks will run tests and linting automatically
+
+## 🎯 Success Criteria
+
+A successful change:
+1. ✅ All tests pass
+2. ✅ All linting checks pass
+3. ✅ TypeScript compiles without errors
+4. ✅ No existing features are broken
+5. ✅ CI pipeline will succeed
+6. ✅ Code follows existing patterns and style
+
+---
+
+**Remember**: Quality and stability over speed. It's better to ask for clarification than to make assumptions that could break the project.
+

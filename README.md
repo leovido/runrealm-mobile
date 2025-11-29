@@ -59,3 +59,14 @@ packages/
 ## 🤝 Contributing
 
 See [architecture.md](docs/architecture.md) for detailed contribution guidelines.
+
+### For AI Agents
+
+If you're an AI agent working on this codebase, **please read [AI_GUIDELINES.md](AI_GUIDELINES.md) first**. This document contains critical guidelines to ensure quality and prevent regressions.
+
+**Key points:**
+- ✅ Always run tests (`npm run test`) before committing
+- ✅ Always run linting (`npm run lint`) before committing
+- ❌ Never remove features without explicit request
+- ❌ Never make unnecessary changes or refactoring
+- ❌ Never break existing functionality

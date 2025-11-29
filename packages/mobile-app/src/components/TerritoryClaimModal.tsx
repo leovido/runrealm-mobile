@@ -34,6 +34,7 @@ export const TerritoryClaimModal: React.FC<TerritoryClaimModalProps> = React.mem
   ({ visible, runData, territoryService, web3Adapter, onClose, onSuccess, onError }) => {
     const [claiming, setClaiming] = useState(false);
     const [claimStep, setClaimStep] = useState<'preview' | 'claiming' | 'success'>('preview');
+    const [claimedTerritory, setClaimedTerritory] = useState<Territory | null>(null);
 
     const handleClaim = async () => {
       // Check wallet connection
@@ -52,6 +53,7 @@ export const TerritoryClaimModal: React.FC<TerritoryClaimModalProps> = React.mem
         const claimResult = await territoryService.claimTerritoryFromExternalActivity(runData);
 
         if (claimResult.success && claimResult.territory) {
+          setClaimedTerritory(claimResult.territory);
           setClaimStep('success');
 
           // Show success for 2 seconds, then close
@@ -77,6 +79,7 @@ export const TerritoryClaimModal: React.FC<TerritoryClaimModalProps> = React.mem
     const handleClose = () => {
       setClaiming(false);
       setClaimStep('preview');
+      setClaimedTerritory(null);
       onClose();
     };
 
@@ -191,7 +194,9 @@ export const TerritoryClaimModal: React.FC<TerritoryClaimModalProps> = React.mem
               <View style={styles.successContainer}>
                 <Text style={styles.successIcon}>🎉</Text>
                 <Text style={styles.successTitle}>Territory Claimed!</Text>
-                <Text style={styles.successText}>{territoryPreview.name} is now yours</Text>
+                <Text style={styles.successText}>
+                  {claimedTerritory?.metadata?.name || territoryPreview.name} is now yours
+                </Text>
               </View>
             )}
           </View>
