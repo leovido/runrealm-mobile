@@ -13,7 +13,9 @@
     "outDir": "./dist",
     "rootDir": ".",
     "baseUrl": ".",
-    "typeRoots": ["../../node_modules/@types", "../../types"]
+    "typeRoots": ["../../node_modules/@types", "../../types"],
+    "types": ["jest", "node"]
   },
-  "include": ["**/*", "types/**/*"]
+  "include": ["**/*", "types/**/*"],
+  "exclude": ["**/__tests__/**", "**/*.test.ts", "**/*.spec.ts", "dist/**", "node_modules/**"]
 }
