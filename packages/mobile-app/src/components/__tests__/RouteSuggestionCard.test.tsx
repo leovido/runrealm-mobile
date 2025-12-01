@@ -4,6 +4,7 @@
 
 import { AIService } from '@runrealm/shared-core/services/ai-service';
 import { fireEvent, render, waitFor } from '@testing-library/react-native';
+import React from 'react';
 import { RouteSuggestionCard } from '../RouteSuggestionCard';
 
 jest.mock('@runrealm/shared-core/services/ai-service');
