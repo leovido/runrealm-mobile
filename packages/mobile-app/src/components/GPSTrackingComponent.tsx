@@ -18,62 +18,12 @@ import {
   View,
 } from 'react-native';
 
-// Lazy load TaskManager to avoid initialization errors
-// Don't import at module level - load it when needed
-const TaskManager: any = null;
-const taskDefined = false;
-
-// Define background location task (only if TaskManager is available)
-// DISABLED: TaskManager causes initialization errors with LegacyEventEmitter
-// TODO: Fix TaskManager integration when background tracking is needed
-const defineLocationTask = () => {
-  // Temporarily disabled to avoid TaskManager initialization errors
-  // The require() call was causing Metro to try to load TaskManager at bundle time
-  console.warn('Background location tracking disabled - TaskManager integration pending');
-  return;
-
-  /* DISABLED CODE - Re-enable when TaskManager is fixed
-  // Only define once
-  if (taskDefined) return;
-  
-  // Lazy load TaskManager only when needed
-  // Use dynamic require to prevent Metro from analyzing it
-  if (!TaskManager) {
-    try {
-      const taskManagerModule = 'expo-task-manager';
-      TaskManager = require(taskManagerModule);
-    } catch (error) {
-      console.warn('TaskManager not available:', error);
-      return;
-    }
-  }
-  
-  if (!TaskManager) {
-    console.warn('TaskManager not available, background location tracking disabled');
-    return;
-  }
-  
-  try {
-    TaskManager.defineTask('LOCATION_TASK_NAME', async ({ data, error }: any) => {
-      if (error) {
-        console.error('Location task error:', error);
-        return;
-      }
-      if (data) {
-        const { locations } = data as { locations: Location.LocationObject[] };
-        const location = locations[0];
-        console.log('Location update:', location);
-      }
-    });
-    taskDefined = true;
-  } catch (error) {
-    console.warn('Failed to define location task:', error);
-  }
-  */
-};
+// Import BackgroundTrackingService for proper background tracking
+import { BackgroundTrackingService } from '../services/BackgroundTrackingService';
 
 // Import mobile service
 import MobileRunTrackingService from '../services/MobileRunTrackingService';
+import { AICoachingWidget } from './AICoachingWidget';
 
 interface GPSTrackingProps {
   onRunStart?: () => void;
@@ -93,6 +43,7 @@ const GPSTrackingComponent: React.FC<GPSTrackingProps> = ({ onRunStart, onRunSto
   const [isLoadingGPS, setIsLoadingGPS] = useState(false);
   const [territoryEligible, setTerritoryEligible] = useState(false);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
+  const [showAICoaching, setShowAICoaching] = useState(false);
 
   // Animation values
   const gpsAccuracyAnim = useRef(new Animated.Value(0)).current;
@@ -100,14 +51,11 @@ const GPSTrackingComponent: React.FC<GPSTrackingProps> = ({ onRunStart, onRunSto
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const mobileTrackingService = new MobileRunTrackingService();
+  const backgroundTrackingService = BackgroundTrackingService.getInstance();
 
   useEffect(() => {
     // Initialize geolocation tracking when component mounts
     requestLocationPermission();
-    // Define the location task when component mounts (not at module load)
-    // Only define if we're actually going to use background tracking
-    // For now, skip TaskManager to avoid initialization errors
-    // defineLocationTask();
   }, []);
 
   // Visual feedback functions
@@ -259,31 +207,34 @@ const GPSTrackingComponent: React.FC<GPSTrackingProps> = ({ onRunStart, onRunSto
         return;
       }
 
-      // Start location updates (only if TaskManager is available)
-      if (TaskManager) {
-        await Location.startLocationUpdatesAsync('LOCATION_TASK_NAME', {
+      // Use foreground location updates for UI
+      await Location.watchPositionAsync(
+        {
           accuracy: Location.Accuracy.High,
-          distanceInterval: 5, // Update every 5 meters
-          timeInterval: 2000, // Update every 2 seconds
-          foregroundService: {
-            notificationTitle: 'RunRealm GPS Tracking',
-            notificationBody: 'Tracking your run in the background',
-          },
-        });
-      } else {
-        // Fallback: Use foreground location updates only
-        console.warn('TaskManager not available, using foreground location updates only');
-        await Location.watchPositionAsync(
-          {
-            accuracy: Location.Accuracy.High,
-            distanceInterval: 5,
-            timeInterval: 2000,
-          },
-          (location) => {
-            console.log('Location update:', location);
-            // Update state here if needed
+          distanceInterval: 5,
+          timeInterval: 2000,
+        },
+        (location) => {
+          setLocation({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+          });
+          updateGPSAccuracy(location.coords.accuracy || 20);
+
+          // Update run stats if tracking
+          if (isTracking) {
+            const stats = mobileTrackingService.getCurrentStats();
+            updateRunStats(stats);
           }
-        );
+        }
+      );
+
+      // Start background tracking if enabled
+      try {
+        await backgroundTrackingService.startBackgroundTracking();
+      } catch (bgError) {
+        console.warn('Background tracking not available:', bgError);
+        // Continue with foreground tracking only
       }
     } catch (error) {
       console.error('Location watch error:', error);
@@ -299,11 +250,11 @@ const GPSTrackingComponent: React.FC<GPSTrackingProps> = ({ onRunStart, onRunSto
       setCurrentRunId(null);
       stopPulseAnimation();
 
-      // Clear location watch
+      // Stop background tracking
       try {
-        await Location.stopLocationUpdatesAsync('LOCATION_TASK_NAME');
+        await backgroundTrackingService.stopBackgroundTracking();
       } catch (error) {
-        console.error('Error stopping location updates:', error);
+        console.error('Error stopping background tracking:', error);
       }
 
       console.log('Run stopped:', runData);
@@ -320,11 +271,11 @@ const GPSTrackingComponent: React.FC<GPSTrackingProps> = ({ onRunStart, onRunSto
     setIsTracking(false);
     stopPulseAnimation();
 
-    // Clear location watch when paused
+    // Stop background tracking when paused
     try {
-      await Location.stopLocationUpdatesAsync('LOCATION_TASK_NAME');
+      await backgroundTrackingService.stopBackgroundTracking();
     } catch (error) {
-      console.error('Error stopping location updates:', error);
+      console.error('Error stopping background tracking:', error);
     }
   };
 
@@ -474,6 +425,23 @@ const GPSTrackingComponent: React.FC<GPSTrackingProps> = ({ onRunStart, onRunSto
           </Animated.View>
         )}
       </View>
+
+      {/* AI Coaching Widget */}
+      <AICoachingWidget
+        currentRun={mobileTrackingService.getCurrentRun()}
+        visible={showAICoaching && isTracking}
+        onDismiss={() => setShowAICoaching(false)}
+      />
+
+      {/* Toggle AI Coaching Button */}
+      {isTracking && (
+        <TouchableOpacity
+          style={styles.aiCoachingToggle}
+          onPress={() => setShowAICoaching(!showAICoaching)}
+        >
+          <Text style={styles.aiCoachingToggleText}>{showAICoaching ? '🤖' : '🤖'}</Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
@@ -648,6 +616,22 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
+  },
+  aiCoachingToggle: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    backgroundColor: 'rgba(0, 255, 136, 0.2)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#00ff88',
+  },
+  aiCoachingToggleText: {
+    fontSize: 20,
   },
 });
 

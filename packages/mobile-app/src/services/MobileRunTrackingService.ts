@@ -155,6 +155,36 @@ class MobileRunTrackingService {
       throw error;
     }
   }
+
+  /**
+   * Save a completed run to history
+   */
+  async saveRunToHistory(run: RunSession): Promise<void> {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const historyString = await AsyncStorage.getItem('runrealm_run_history');
+      const history: RunSession[] = historyString ? JSON.parse(historyString) : [];
+      history.push(run);
+      await AsyncStorage.setItem('runrealm_run_history', JSON.stringify(history));
+      console.log('Run saved to history:', run.id);
+    } catch (error) {
+      console.error('Failed to save run to history:', error);
+    }
+  }
+
+  /**
+   * Get run history from storage
+   */
+  async getRunHistory(): Promise<RunSession[]> {
+    try {
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      const historyString = await AsyncStorage.getItem('runrealm_run_history');
+      return historyString ? JSON.parse(historyString) : [];
+    } catch (error) {
+      console.error('Failed to get run history:', error);
+      return [];
+    }
+  }
 }
 
 export default MobileRunTrackingService;
