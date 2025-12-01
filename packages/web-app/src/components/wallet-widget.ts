@@ -370,7 +370,32 @@ export class WalletWidget extends BaseService {
       parent: document.body,
     });
 
-    this.animationService.fadeIn(modal, { duration: 200 });
+    // Set display to flex and centering styles
+    // The fadeIn method sets display to 'block', so we need to override it
+    modal.style.display = 'flex';
+    modal.style.alignItems = 'center';
+    modal.style.justifyContent = 'center';
+    modal.style.opacity = '0';
+
+    // Fade in the modal
+    // We'll manually handle the fade to keep flex display
+    const duration = 200;
+    const startTime = performance.now();
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      modal.style.opacity = progress.toString();
+      // Keep display as flex throughout animation
+      modal.style.display = 'flex';
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      }
+    };
+
+    requestAnimationFrame(animate);
   }
 
   private hideWalletModal(): void {
