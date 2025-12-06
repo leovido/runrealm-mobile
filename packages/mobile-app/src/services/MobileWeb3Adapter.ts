@@ -102,20 +102,34 @@ export class MobileWeb3Adapter extends BaseService {
   /**
    * Connect wallet using WalletConnect or native mobile wallets
    * Attempts WalletConnect first, falls back to Web3Service for browser wallets
+   *
+   * WALLETCONNECT V2 INTEGRATION:
+   * To implement full WalletConnect v2 support, you would need to:
+   * 1. Install: @walletconnect/react-native-dapp or @walletconnect/modal-react-native
+   * 2. Initialize WalletConnect client with project ID
+   * 3. Create a session URI and display QR code (use WalletConnectModal component)
+   * 4. Handle deep linking for mobile wallet apps
+   * 5. Wait for wallet approval and establish session
+   * 6. Connect to the wallet provider via WalletConnect protocol
+   *
+   * Example structure:
+   * ```typescript
+   * if (!this.walletConnectProvider) {
+   *   const client = await WalletConnectModal.init({
+   *     projectId: 'YOUR_PROJECT_ID',
+   *     metadata: { name: 'RunRealm', description: '...', url: '...' }
+   *   });
+   *   this.walletConnectProvider = client;
+   * }
+   * const session = await this.walletConnectProvider.connect();
+   * // Use session to create provider and connect
+   * ```
    */
   public async connectWallet(): Promise<WalletInfo> {
     this.updateState({ connecting: true, error: null });
 
     try {
-      // Try WalletConnect for mobile wallets first
-      // For now, this is a placeholder - WalletConnect v2 integration would go here
-      // In a full implementation, we would:
-      // 1. Initialize WalletConnect client
-      // 2. Create a session URI
-      // 3. Display QR code or deep link
-      // 4. Wait for wallet approval
-      // 5. Connect to the wallet provider
-
+      // TODO: Implement WalletConnect v2 integration for native mobile wallets
       // For now, delegate to Web3Service (works for browser wallets in Expo web)
       // In native builds, this would need WalletConnect integration
       const walletInfo = await this.web3Service.connectWallet();

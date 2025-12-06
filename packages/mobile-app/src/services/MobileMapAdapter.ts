@@ -168,7 +168,14 @@ export class MobileMapAdapter {
         coordinates,
         fillColor: 'rgba(0, 255, 136, 0.3)',
         strokeColor: '#00ff88',
-        metadata: {},
+        metadata: {
+          name: 'Current Territory',
+          description: '',
+          landmarks: [],
+          difficulty: 50,
+          rarity: 'common',
+          estimatedReward: 0,
+        },
       },
     ];
     this.notifyListeners();
@@ -218,11 +225,7 @@ export class MobileMapAdapter {
       coordinates: this.boundsToCoordinates(intent.bounds),
       fillColor: 'rgba(230, 126, 34, 0.4)',
       strokeColor: '#E67E22',
-      metadata: {
-        status: intent.status,
-        expiresAt: intent.expiresAt,
-        estimatedDistance: intent.estimatedDistance,
-      },
+      metadata: intent.metadata, // Use the metadata from the intent (TerritoryMetadata)
     });
     this.notifyListeners();
   }

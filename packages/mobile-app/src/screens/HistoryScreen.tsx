@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RunSession } from '@runrealm/shared-core/services/run-tracking-service';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
@@ -11,10 +13,18 @@ import {
   View,
 } from 'react-native';
 
+type RootStackParamList = {
+  HistoryList: undefined;
+  RunDetail: { run: RunSession };
+};
+
+type HistoryScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'HistoryList'>;
+
 const RUN_HISTORY_KEY = 'runrealm_run_history';
 const MAX_HISTORY_ITEMS = 100;
 
 export const HistoryScreen: React.FC = () => {
+  const navigation = useNavigation<HistoryScreenNavigationProp>();
   const [runs, setRuns] = useState<RunSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -109,7 +119,11 @@ export const HistoryScreen: React.FC = () => {
       ) : (
         <View style={styles.runsList}>
           {runs.map((run) => (
-            <TouchableOpacity key={run.id} style={styles.runCard}>
+            <TouchableOpacity
+              key={run.id}
+              style={styles.runCard}
+              onPress={() => navigation.navigate('RunDetail', { run })}
+            >
               <View style={styles.runHeader}>
                 <Text style={styles.runDate}>{formatDate(run.startTime)}</Text>
                 {run.territoryEligible && (

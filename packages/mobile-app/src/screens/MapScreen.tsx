@@ -10,6 +10,7 @@ import type { ComponentType } from 'react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { RouteSuggestionCard } from '../components/RouteSuggestionCard';
+import { RunSummaryModal } from '../components/RunSummaryModal';
 import { TerritoryClaimModal } from '../components/TerritoryClaimModal';
 import { MobileMapAdapter } from '../services/MobileMapAdapter';
 import { MobileWeb3Adapter } from '../services/MobileWeb3Adapter';
@@ -27,6 +28,7 @@ const MapScreen: React.FC<MapScreenProps> = ({ navigation: _navigation, route: _
   const [TerritoryMapView, setTerritoryMapView] = useState<ComponentType<any> | null>(null);
   const [GPSTrackingComponent, setGPSTrackingComponent] = useState<ComponentType<any> | null>(null);
   const [WalletButton, setWalletButton] = useState<ComponentType<any> | null>(null);
+  const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [showClaimModal, setShowClaimModal] = useState(false);
   const [completedRunData, setCompletedRunData] = useState<RunSession | null>(null);
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(
@@ -115,10 +117,8 @@ const MapScreen: React.FC<MapScreenProps> = ({ navigation: _navigation, route: _
 
       setCompletedRunData(completedRun);
 
-      // Check if run is eligible for territory claiming
-      if (completedRun.totalDistance >= 500) {
-        setShowClaimModal(true);
-      }
+      // Show summary modal for all runs
+      setShowSummaryModal(true);
     }
   };
 
@@ -132,6 +132,28 @@ const MapScreen: React.FC<MapScreenProps> = ({ navigation: _navigation, route: _
 
   const handleWalletError = (error: string) => {
     console.error('Wallet error:', error);
+  };
+
+  const handleSummaryClose = () => {
+    setShowSummaryModal(false);
+    // After closing summary, check if run is eligible for territory claiming
+    if (completedRunData && completedRunData.totalDistance >= 500) {
+      setShowClaimModal(true);
+    } else {
+      // Clear completed run data if not eligible
+      setCompletedRunData(null);
+    }
+  };
+
+  const handleSummaryViewDetails = () => {
+    setShowSummaryModal(false);
+    // Navigate to run detail screen would go here if we had navigation
+    // For now, just close and show claim modal if eligible
+    if (completedRunData && completedRunData.totalDistance >= 500) {
+      setShowClaimModal(true);
+    } else {
+      setCompletedRunData(null);
+    }
   };
 
   const handleClaimSuccess = () => {
@@ -218,6 +240,17 @@ const MapScreen: React.FC<MapScreenProps> = ({ navigation: _navigation, route: _
           />
         )}
       </View>
+      {/* Run Summary Modal - Shows after every run completion */}
+      {completedRunData && (
+        <RunSummaryModal
+          visible={showSummaryModal}
+          runData={completedRunData}
+          onClose={handleSummaryClose}
+          onViewDetails={handleSummaryViewDetails}
+        />
+      )}
+
+      {/* Territory Claim Modal - Shows after summary if run is eligible */}
       {completedRunData && (
         <TerritoryClaimModal
           visible={showClaimModal}
